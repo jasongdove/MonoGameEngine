@@ -17,7 +17,8 @@ namespace GameEngine
         private Color _descriptionColor;
         private Color _descriptionBoxColor;
         private float _descriptionScale;
-        private int _selectedEntry = 0;
+        private int _selectedEntry;
+        private bool _transitioning;
 
         protected MenuScreen()
         {
@@ -25,6 +26,8 @@ namespace GameEngine
         }
 
         public event EventHandler Cancel;
+        public event EventHandler OnSubmenu;
+        public event EventHandler OnRestore;
 
         public GameScreen Parent { get; set; }
 
@@ -129,6 +132,7 @@ namespace GameEngine
         public virtual void MenuCancel()
         {
             ExitScreen();
+            _transitioning = true;
             var handler = Cancel;
             if (handler != null)
             {
@@ -136,8 +140,51 @@ namespace GameEngine
             }
         }
 
+        public virtual void ActivateSubmenu()
+        {
+            var handler = OnSubmenu;
+            if (handler != null)
+            {
+                _transitioning = true;
+                MenuState = MenuState.ActivatingSubmenu;
+                handler(this, EventArgs.Empty);
+            }
+            else
+            {
+                MenuState = MenuState.Normal;
+                FreezeScreen();
+            }
+        }
+
+        public virtual void Restore()
+        {
+            var handler = OnRestore;
+            if (handler != null)
+            {
+                _transitioning = true;
+                MenuState = MenuState.Restoring;
+                handler(this, EventArgs.Empty);
+            }
+            else
+            {
+                MenuState = MenuState.Normal;
+                ActivateScreen();
+            }
+        }
+
+        public virtual void OperateNormally()
+        {
+            _transitioning = false;
+            MenuState = MenuState.Normal;
+        }
+
         public override void HandleInput()
         {
+            if (MenuState != MenuState.Normal || _transitioning)
+            {
+                return;
+            }
+
             if (InputMap.NewActionPress(PreviousEntryActionName))
             {
                 _menuEntries[_selectedEntry].Normal();
@@ -189,26 +236,37 @@ namespace GameEngine
 
         protected override void UpdateScreen(GameTime gameTime)
         {
-            if (_menuEntries.Count == 0)
+            if (MenuState == MenuState.Normal)
             {
-                return;
-            }
+                if (_menuEntries.Count == 0)
+                {
+                    return;
+                }
 
-            if (_menuEntries[_selectedEntry].State != MenuEntry.EntryState.Highlight)
-            {
-                _menuEntries[_selectedEntry].Highlight();
-            }
+                if (_menuEntries[_selectedEntry].State != MenuEntry.EntryState.Highlight)
+                {
+                    _menuEntries[_selectedEntry].Highlight();
+                }
 
-            for (int i = 0; i < _menuEntries.Count; i++)
-            {
-                _menuEntries[i].UpdateEntry(gameTime);
-                _menuEntries[_selectedEntry].AnimateHighlighted(gameTime);
-            }
+                for (int i = 0; i < _menuEntries.Count; i++)
+                {
+                    _menuEntries[i].UpdateEntry(gameTime);
+                    _menuEntries[_selectedEntry].AnimateHighlighted(gameTime);
+                }
 
-            if (MouseTexture != null)
+                if (MouseTexture != null)
+                {
+                    Vector2 mousePos = InputMap.GetMousePosition();
+                    MouseBounds = new Rectangle((int)mousePos.X, (int)mousePos.Y, MouseTexture.Width, MouseTexture.Height);
+                }
+            }
+            else if (MenuState == MenuState.ActivatingSubmenu)
             {
-                Vector2 mousePos = InputMap.GetMousePosition();
-                MouseBounds = new Rectangle((int)mousePos.X, (int)mousePos.Y, MouseTexture.Width, MouseTexture.Height);
+                ActivateSubmenu();
+            }
+            else
+            {
+                Restore();
             }
         }
 
@@ -238,13 +296,17 @@ namespace GameEngine
         private void MenuScreen_Removing(object sender, EventArgs e)
         {
             _menuEntries.Clear();
-            if (Parent != null && Parent.State == ScreenState.Frozen)
+            if (Parent != null)
             {
                 Parent.ActivateScreen();
                 var ms = Parent as MenuScreen;
-                if (ms != null && ms.MouseTexture != null)
+                if (ms != null)
                 {
-                    ms.ShowMouse();
+                    ms.Restore();
+                    if (ms.MouseTexture != null)
+                    {
+                        ms.ShowMouse();
+                    }
                 }
             }
         }

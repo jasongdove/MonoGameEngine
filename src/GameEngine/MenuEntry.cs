@@ -9,7 +9,7 @@ namespace GameEngine
     {
         private EntryState _state = EntryState.Normal;
         private Dictionary<bool, Rectangle> _displayRegion;
-        private bool _hasSubMenu = false;
+        private bool _hasSubMenu;
         private Color _color = Color.White;
         private float _scale = 1.0f;
         private float _opacity = 1.0f;
@@ -253,8 +253,8 @@ namespace GameEngine
                 {
                     Vector2 textDims = spriteFont.MeasureString(EntryTitle);
 
-                    float x = EntryPadding.X == 0 ? (EntryTexture.Width / 2) - (textDims.X / 2) : EntryPadding.X;
-                    float y = EntryPadding.Y == 0 ? (EntryTexture.Height / 2) - (textDims.Y / 2) : EntryPadding.Y;
+                    float x = EntryPadding.X == 0 ? EntryTexture.Width / 2f - textDims.X / 2f : EntryPadding.X;
+                    float y = EntryPadding.Y == 0 ? EntryTexture.Height / 2f - textDims.Y / 2f : EntryPadding.Y;
 
                     entryPosition += new Vector2(x, y);
 
@@ -277,7 +277,7 @@ namespace GameEngine
                 Vector2 textDims = spriteFont.MeasureString(EntryDescription) * _scale;
 
                 float x = padding.X;
-                float y = padding.Y;
+                float y = boxPosition.Height - textDims.Y / 2f;
 
                 var descriptionPosition = new Vector2(boxPosition.X + x, boxPosition.Y + y);
                 spriteBatch.DrawString(spriteFont, EntryDescription, descriptionPosition, textColor, 0.0f, Vector2.Zero, _scale, SpriteEffects.None, 1.0f);
