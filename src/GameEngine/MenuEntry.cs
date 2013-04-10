@@ -274,10 +274,10 @@ namespace GameEngine
 
             if (spriteFont != null)
             {
-                Vector2 textDims = spriteFont.MeasureString(EntryDescription) * _scale;
+                //Vector2 textDims = spriteFont.MeasureString(EntryDescription) * _scale;
 
                 float x = padding.X;
-                float y = boxPosition.Height - textDims.Y / 2f;
+                float y = padding.Y;
 
                 var descriptionPosition = new Vector2(boxPosition.X + x, boxPosition.Y + y);
                 spriteBatch.DrawString(spriteFont, EntryDescription, descriptionPosition, textColor, 0.0f, Vector2.Zero, _scale, SpriteEffects.None, 1.0f);
