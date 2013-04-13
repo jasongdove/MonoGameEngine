@@ -53,7 +53,7 @@ namespace GameEngine
         public Vector2 Position
         {
             get { return _position; }
-            set { _position = value; }
+            //set { _position = value; }
         }
 
         public float Rotation { get; set; }
@@ -72,6 +72,18 @@ namespace GameEngine
         protected float DiePercent
         {
             get { return _diePercent; }
+        }
+
+        public void Move(float x, float y)
+        {
+            _position.X += x;
+            _position.Y += y;
+        }
+
+        public void MoveTo(float x, float y)
+        {
+            _position.X = x;
+            _position.Y = y;
         }
 
         public virtual void Die()
